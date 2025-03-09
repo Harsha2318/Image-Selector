@@ -68,7 +68,7 @@ def process_single_image(uploaded_file):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+     return send_file('index.html')
 
 @app.route('/process', methods=['POST'])
 def process_images():

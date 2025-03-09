@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snap Genius - Image Quality Evaluator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .preview-container img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .result-section {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">📸 Snap Genius - Image Quality Evaluator</h2>
+
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        <label class="form-label">Upload Images:</label>
+        <input type="file" name="file" multiple class="form-control mb-3" required id="imageUpload">
+        <div id="imagePreview" class="preview-container"></div>
+
+        <button type="submit" class="btn btn-primary w-100">📤 Upload & Process</button>
+    </form>
+
+    <div id="loading" class="text-center mt-4 d-none">
+        <h4>Analyzing Images...</h4>
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div id="resultContainer" class="mt-5">
+        <!-- High-Quality Section -->
+        <div id="highQualitySection" class="result-section">
+            <h4 class="section-title text-success">✨ High-Quality Images</h4>
+            <div id="highQualityPreview" class="preview-container"></div>
+            <a href="/download_high" id="highQualityBtn" class="btn btn-success d-none w-100 mt-3">⬇️ Download High-Quality Images</a>
+        </div>
+
+        <!-- Low-Quality Section -->
+        <div id="lowQualitySection" class="result-section">
+            <h4 class="section-title text-danger">⚠️ Low-Quality Images</h4>
+            <div id="lowQualityPreview" class="preview-container"></div>
+            <a href="/download_low" id="lowQualityBtn" class="btn btn-danger d-none w-100 mt-3">⬇️ Download Low-Quality Images</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#uploadForm").on("submit", function (event) {
+            event.preventDefault();
+            let formData = new FormData(this);
+            $("#loading").removeClass("d-none");
+            $(".result-section").hide();
+            $("#highQualityPreview, #lowQualityPreview").empty();
+            $("#highQualityBtn, #lowQualityBtn").addClass("d-none");
+
+            $.ajax({
+                url: "/process",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    $("#loading").addClass("d-none");
+
+                    if (response.high_quality) {
+                        $("#highQualitySection").fadeIn();
+                        $("#highQualityBtn").removeClass("d-none");
+                    }
+                    if (response.low_quality) {
+                        $("#lowQualitySection").fadeIn();
+                        $("#lowQualityBtn").removeClass("d-none");
+                    }
+
+                    response.preview_high.forEach(imgData => {
+                        let img = $("<img>").attr("src", "data:image/png;base64," + imgData);
+                        $("#highQualityPreview").append(img);
+                    });
+
+                    response.preview_low.forEach(imgData => {
+                        let img = $("<img>").attr("src", "data:image/png;base64," + imgData);
+                        $("#lowQualityPreview").append(img);
+                    });
+                },
+                error: function () {
+                    $("#loading").addClass("d-none");
+                    alert("Error processing images!");
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
